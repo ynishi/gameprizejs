@@ -46,7 +46,7 @@
     "setupFiles": [
       "dotenv/config"
     ],
-    "testTimeout": 10000
+    "testTimeout": 20000
   },
   "dependencies": {
     "dotenv": "^8.2.0",

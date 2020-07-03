@@ -2,10 +2,16 @@ import { JsonRpc, Api } from "eosjs";
 import { JsSignatureProvider } from "eosjs/dist/eosjs-jssig";
 
 export type ActionName = string;
+export type TableName = string;
 
 export type TableIndex = {
     index_position: number;
     key_type: string;
+};
+
+export const defaultTableIndex: TableIndex = {
+    index_position: 0,
+    key_type: "i64t",
 };
 
 export interface ApiProvider {
@@ -29,7 +35,10 @@ export class DefaultApiProvider {
         const { TextDecoder, TextEncoder } = require("util");
         // TODO: make mock
 
-        const privateKey = localStorage.getItem("gameprize_key") || "";
+        const privateKey =
+            localStorage.getItem(
+                process.env.GAMEPRIZE_LIB_STORAGE_PRI_KEY || ""
+            ) || "";
         const signatureProvider = new JsSignatureProvider([privateKey]);
         return new Api({
             rpc: this.rpc,
@@ -41,7 +50,11 @@ export class DefaultApiProvider {
 
     user(): string {
         // TODO: make mock
-        return localStorage.getItem("gameprize_account") || "";
+        return (
+            localStorage.getItem(
+                process.env.GAMEPRIZE_LIB_STORAGE_USR_KEY || ""
+            ) || ""
+        );
     }
 }
 
@@ -125,7 +138,7 @@ export class Client {
     // return Array presents optional
     async getLast(
         table: string,
-        index: TableIndex,
+        index: TableIndex = defaultTableIndex,
         options: any = {}
     ): Promise<Array<any>> {
         try {
@@ -136,7 +149,7 @@ export class Client {
                 limit: 1,
             });
             if (data != []) {
-                return [data];
+                return data;
             }
             return [];
         } catch (err) {
@@ -144,33 +157,40 @@ export class Client {
         }
     }
 
+    async sleep(time: any) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve();
+            }, time);
+        });
+    }
+
     // fetch last, insert, fetch over last and find insert by this.
-    async newDataAction(action: ActionName, dataValue: any): Promise<any> {
+    async newDataAction(
+        action: ActionName,
+        table: TableName,
+        tokenKey: string,
+        dataValue: any
+    ): Promise<any> {
         try {
-            const api = this.apiProvider.api();
-            const user = this.apiProvider.user();
-            const resultWithConfig = await api.transact(
-                {
-                    actions: [
-                        {
-                            account: this.contract,
-                            name: action,
-                            authorization: [
-                                {
-                                    actor: user,
-                                    permission: "active",
-                                },
-                            ],
-                            data: dataValue,
-                        },
-                    ],
-                },
-                {
-                    blocksBehind: 3,
-                    expireSeconds: 30,
+            const latest = await this.getLast(table);
+            const latestId = latest.length > 0 ? latest[0].id : 0;
+            const token = String(Math.random()).substr(3, 5);
+            dataValue[tokenKey] = dataValue[tokenKey] + token;
+            await this.takeAction(action, dataValue);
+            for (let i = 0; i < 5; i++) {
+                const fetched = await this.getData(table, defaultTableIndex, {
+                    lower_bound: latestId,
+                    limit: 20,
+                });
+                for (let j = 0; j < fetched.length; j++) {
+                    if (fetched[j] && fetched[j][tokenKey].search(token) > -1) {
+                        return fetched[j].id;
+                    }
                 }
-            );
-            return resultWithConfig;
+                await this.sleep(2000);
+            }
+            throw "not found valid id";
         } catch (err) {
             throw err;
         }
