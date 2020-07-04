@@ -1,0 +1,58 @@
+{
+  "name": "gameprizejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "start": "npm run build:live",
+    "build": "tsc -p .",
+    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "start:test": "npm run test:live",
+    "test": "jest",
+    "test:live": "nodemon --watch src --watch tests -e ts --exec 'npm test'",
+    "fmt": "npx prettier --write 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^26.0.3",
+    "@types/node": "^14.0.14",
+    "jest": "^26.1.0",
+    "jest-mock-extended": "^1.0.9",
+    "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.4",
+    "pettier": "^1.1.0",
+    "ts-jest": "^26.1.1",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "tsconfig.json"
+      }
+    },
+    "testMatch": [
+      "**/tests/**/*.test.ts"
+    ],
+    "setupFiles": [
+      "dotenv/config"
+    ],
+    "testTimeout": 20000
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "eosjs": "^20.0.3"
+  },
+  "prettier": {
+    "tabWidth": 4
+  }
+}
