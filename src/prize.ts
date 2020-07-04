@@ -1,5 +1,5 @@
-import * as client from "./client";
 import Client, { TableIndex } from "./client";
+import * as utils from "./utils";
 
 const ACTION_REGISTER_PRIZE = "registerprz";
 const ACTION_UPDATE_PRIZE = "updateprz";
@@ -10,16 +10,6 @@ const INDEX_PRIZES_ID: TableIndex = {
     index_position: 0,
     key_type: "i64t",
 };
-
-export type PrizeDetail = {
-    desc?: string;
-    uri?: string;
-    score?: any;
-    title?: string;
-    memo?: string;
-};
-
-export type Score = Record<string, number>;
 
 // Entity
 export class Prize {
@@ -52,13 +42,8 @@ export class Prize {
         this.memo = memo ? memo : "created by gameprizejs";
     }
 
-    static titleFromDesc(desc: string): string {
-        if (!desc) {
-            return "";
-        }
-        const sliced = desc.slice(0, 10);
-        const suffix = desc.length >= 10 ? "..." : "";
-        return sliced + suffix;
+    static titleFromDesc(desc: string) {
+        return utils.titleFromDesc(desc);
     }
 
     static fromData(data: PrizeData): Prize {
@@ -110,6 +95,16 @@ export class Prize {
 }
 
 // Adapter Data Class
+export type PrizeDetail = {
+    desc?: string;
+    uri?: string;
+    score?: any;
+    title?: string;
+    memo?: string;
+};
+
+export type Score = Record<string, number>;
+
 export type PrizeData = {
     id: number;
     registerer: string;

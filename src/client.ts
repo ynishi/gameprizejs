@@ -170,13 +170,19 @@ export class Client {
         action: ActionName,
         table: TableName,
         tokenKey: string,
-        dataValue: any
+        dataValue: any,
+        setTokenF?: (data: any, token: string) => any,
+        getTokenF?: (data: any) => string
     ): Promise<any> {
         try {
             const latest = await this.getLast(table);
             const latestId = latest.length > 0 ? latest[0].id : 0;
             const token = String(Math.random()).substr(3, 5);
-            dataValue[tokenKey] = dataValue[tokenKey] + token;
+            if (setTokenF) {
+                dataValue = setTokenF(dataValue, token);
+            } else {
+                dataValue[tokenKey] = dataValue[tokenKey] + token;
+            }
             await this.takeAction(action, dataValue);
             for (let i = 0; i < 5; i++) {
                 const fetched = await this.getData(table, defaultTableIndex, {
@@ -184,8 +190,13 @@ export class Client {
                     limit: 20,
                 });
                 for (let j = 0; j < fetched.length; j++) {
-                    if (fetched[j] && fetched[j][tokenKey].search(token) > -1) {
-                        return fetched[j].id;
+                    if (fetched[j]) {
+                        const fetchedToken = getTokenF
+                            ? getTokenF(fetched[j])
+                            : fetched[j][tokenKey];
+                        if (fetchedToken.search(token) > -1) {
+                            return fetched[j].id;
+                        }
                     }
                 }
                 await this.sleep(2000);

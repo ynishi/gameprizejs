@@ -17,7 +17,6 @@ beforeAll(() => {
 
 describe('cru(no support delete) prize',  (): void => {
     test('should create prize', async () => {
-        console.log(getUri());
         const prize = service.new("desc1").setDetail({
             title: "title1",
             uri: getUri(),
